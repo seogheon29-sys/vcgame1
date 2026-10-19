@@ -12,6 +12,16 @@ const startButton = document.getElementById("startButton");
 const jumpButton = document.getElementById("jumpButton");
 const restartButton = document.getElementById("restartButton");
 const soundButton = document.getElementById("soundButton");
+const recordForm = document.getElementById("recordForm");
+const nicknameInput = document.getElementById("nickname");
+const recordMessage = document.getElementById("recordMessage");
+const rankingBody = document.getElementById("rankingBody");
+const RANKING_KEY = "jumpTimingRankingV1";
+const RANKING_LIMIT = 10;
+let rankings = [];
+let roundStartedAt = 0;
+let finalResult = null;
+let recordSaved = false;
 
 const W = canvas.width;
 const H = canvas.height;
@@ -132,6 +142,13 @@ function showOverlay(tag, title, description, buttonLabel) {
 }
 
 function startGame() {
+  finalResult = null;
+  recordSaved = false;
+  recordForm.classList.add("hidden");
+  nicknameInput.value = "";
+  nicknameInput.disabled = false;
+  recordForm.querySelector('button[type="submit"]').disabled = false;
+  roundStartedAt = performance.now();
   score = 0;
   scoreEl.textContent = "0";
   playerY = GROUND_Y - PLAYER.height;
@@ -156,6 +173,14 @@ function jump() {
 function finish(won) {
   if (state !== "playing") return; // Prevent repeated ending sounds.
   state = won ? "won" : "lost";
+  finalResult = {
+    score,
+    won,
+    durationMs: Math.max(0, Math.round(performance.now() - roundStartedAt)),
+  };
+  recordSaved = false;
+  recordForm.classList.remove("hidden");
+  recordMessage.textContent = "닉네임을 입력하면 이번 기록이 랭킹에 등록됩니다.";
   jumpButton.disabled = true;
   playEndingSound(won);
   if (score > best) {
@@ -279,8 +304,162 @@ function frame(timestamp) {
   requestAnimationFrame(frame);
 }
 
+
+// Up to ten local records. No personal data is sent to any server.
+function loadRankings() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(RANKING_KEY) || "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(row => row && typeof row.nickname === "string" &&
+      Number.isInteger(row.score) && row.score >= 0 && row.score <= TARGET &&
+      typeof row.won === "boolean" && Number.isFinite(row.durationMs) &&
+      row.durationMs >= 0 && typeof row.savedAt === "string")
+      .slice(0, 100).sort(compareRecords).slice(0, RANKING_LIMIT);
+  } catch { return []; }
+}
+
+function compareRecords(a, b) {
+  return b.score - a.score || a.durationMs - b.durationMs ||
+    a.savedAt.localeCompare(b.savedAt);
+}
+
+function formatDuration(ms) {
+  return (ms / 1000).toFixed(1) + "초";
+}
+
+function renderRankings() {
+  rankingBody.replaceChildren();
+  if (!rankings.length) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 5;
+    td.className = "ranking-empty";
+    td.textContent = "아직 등록된 기록이 없습니다. 게임을 끝내고 닉네임을 남겨보세요!";
+    tr.append(td);
+    rankingBody.append(tr);
+    return;
+  }
+  rankings.forEach((entry, index) => {
+    const row = document.createElement("tr");
+    const values = [String(index + 1), entry.nickname,
+      `${entry.score}/${TARGET} · ${formatDuration(entry.durationMs)}`,
+      entry.won ? "승리" : "패배", entry.savedAt.slice(0, 10)];
+    for (const value of values) {
+      const cell = document.createElement("td");
+      cell.textContent = value; // textContent prevents injected markup.
+      row.append(cell);
+    }
+    rankingBody.append(row);
+  });
+}
+
+rankings = loadRankings();
+renderRankings();
+recordForm.addEventListener("submit", event => {
+  event.preventDefault();
+  if (!finalResult || recordSaved || (state !== "won" && state !== "lost")) return;
+  const nickname = nicknameInput.value.trim().replace(/\s+/g, " ");
+  if (nickname.length < 1 || nickname.length > 12) {
+    recordMessage.textContent = "닉네임은 1~12자로 입력해 주세요.";
+    nicknameInput.focus();
+    return;
+  }
+  const entry = { ...finalResult, nickname, savedAt: new Date().toISOString() };
+  const next = [...rankings, entry].sort(compareRecords).slice(0, RANKING_LIMIT);
+  try {
+    localStorage.setItem(RANKING_KEY, JSON.stringify(next));
+  } catch {
+    recordMessage.textContent = "저장 공간에 접근할 수 없습니다. 브라우저의 저장 설정을 확인해 주세요.";
+    return;
+  }
+  rankings = next;
+  recordSaved = true;
+  renderRankings();
+  recordMessage.textContent = rankings.includes(entry) ?
+    "기록이 TOP 10에 저장되었습니다!" : "이번 기록은 TOP 10 밖입니다. 다음에 다시 도전해 보세요!";
+  nicknameInput.disabled = true;
+  recordForm.querySelector('button[type="submit"]').disabled = true;
+});
+
 startButton.addEventListener("click", startGame);
-restartButton.addEventListener("click", startGame);
+re
+// Up to ten local records. No personal data is sent to any server.
+function loadRankings() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(RANKING_KEY) || "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(row => row && typeof row.nickname === "string" &&
+      Number.isInteger(row.score) && row.score >= 0 && row.score <= TARGET &&
+      typeof row.won === "boolean" && Number.isFinite(row.durationMs) &&
+      row.durationMs >= 0 && typeof row.savedAt === "string")
+      .slice(0, 100).sort(compareRecords).slice(0, RANKING_LIMIT);
+  } catch { return []; }
+}
+
+function compareRecords(a, b) {
+  return b.score - a.score || a.durationMs - b.durationMs ||
+    a.savedAt.localeCompare(b.savedAt);
+}
+
+function formatDuration(ms) {
+  return (ms / 1000).toFixed(1) + "초";
+}
+
+function renderRankings() {
+  rankingBody.replaceChildren();
+  if (!rankings.length) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 5;
+    td.className = "ranking-empty";
+    td.textContent = "아직 등록된 기록이 없습니다. 게임을 끝내고 닉네임을 남겨보세요!";
+    tr.append(td);
+    rankingBody.append(tr);
+    return;
+  }
+  rankings.forEach((entry, index) => {
+    const row = document.createElement("tr");
+    const values = [String(index + 1), entry.nickname,
+      `${entry.score}/${TARGET} · ${formatDuration(entry.durationMs)}`,
+      entry.won ? "승리" : "패배", entry.savedAt.slice(0, 10)];
+    for (const value of values) {
+      const cell = document.createElement("td");
+      cell.textContent = value; // textContent prevents injected markup.
+      row.append(cell);
+    }
+    rankingBody.append(row);
+  });
+}
+
+rankings = loadRankings();
+renderRankings();
+recordForm.addEventListener("submit", event => {
+  event.preventDefault();
+  if (!finalResult || recordSaved || (state !== "won" && state !== "lost")) return;
+  const nickname = nicknameInput.value.trim().replace(/\s+/g, " ");
+  if (nickname.length < 1 || nickname.length > 12) {
+    recordMessage.textContent = "닉네임은 1~12자로 입력해 주세요.";
+    nicknameInput.focus();
+    return;
+  }
+  const entry = { ...finalResult, nickname, savedAt: new Date().toISOString() };
+  const next = [...rankings, entry].sort(compareRecords).slice(0, RANKING_LIMIT);
+  try {
+    localStorage.setItem(RANKING_KEY, JSON.stringify(next));
+  } catch {
+    recordMessage.textContent = "저장 공간에 접근할 수 없습니다. 브라우저의 저장 설정을 확인해 주세요.";
+    return;
+  }
+  rankings = next;
+  recordSaved = true;
+  renderRankings();
+  recordMessage.textContent = rankings.includes(entry) ?
+    "기록이 TOP 10에 저장되었습니다!" : "이번 기록은 TOP 10 밖입니다. 다음에 다시 도전해 보세요!";
+  nicknameInput.disabled = true;
+  recordForm.querySelector('button[type="submit"]').disabled = true;
+});
+
+startButton.addEventListener("click", startGame);
 soundButton.addEventListener("click", () => {
   soundEnabled = !soundEnabled;
   updateSoundButton();
@@ -290,9 +469,10 @@ jumpButton.addEventListener("click", jump);
 window.addEventListener("keydown", event => {
   if (event.code !== "Space") return;
   if (event.repeat) return;
+  if (document.activeElement?.matches("input, textarea, select")) return;
   if (document.activeElement?.tagName === "BUTTON") document.activeElement.blur();
   event.preventDefault();
   if (state === "playing") jump();
-  else startGame();
+  else if (state === "ready") startGame();
 });
 requestAnimationFrame(frame);

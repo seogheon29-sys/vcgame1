@@ -28,6 +28,14 @@
           <p id="overlayTag" class="overlay-tag">READY TO JUMP?</p>
           <h2 id="overlayTitle">점프할 준비 됐나요?</h2>
           <p id="overlayText">스페이스바 또는 화면 아래 버튼으로 점프!<br />장애물 10개를 통과하면 승리합니다.</p>
+          <form id="recordForm" class="record-form hidden" autocomplete="off">
+            <label for="nickname">플레이 기록 남기기</label>
+            <div class="record-fields">
+              <input id="nickname" name="nickname" type="text" maxlength="12" placeholder="닉네임 (1~12자)" required aria-describedby="recordMessage" />
+              <button type="submit" class="save-button">기록 저장</button>
+            </div>
+            <p id="recordMessage" class="record-message" aria-live="polite">닉네임을 입력하면 이번 기록이 랭킹에 등록됩니다.</p>
+          </form>
           <button id="startButton" class="primary-button" type="button">게임 시작 <span aria-hidden="true">→</span></button>
         </div>
       </div>
@@ -40,6 +48,23 @@
       <button id="restartButton" type="button" class="secondary-button">↻ 처음부터</button>
     </div>
     <p class="help-text">PC에서는 스페이스바, 모바일에서는 점프 버튼을 사용하세요. 착지 후 다시 점프할 때마다 효과음이 나옵니다. 소리 버튼으로 음소거할 수 있습니다.</p>
+
+    <section class="ranking-section" aria-labelledby="rankingTitle">
+      <div class="ranking-heading">
+        <div>
+          <p class="eyebrow">HALL OF FAME</p>
+          <h2 id="rankingTitle">🏆 TOP 10 랭킹</h2>
+        </div>
+        <span class="ranking-note">이 브라우저에 저장된 기록</span>
+      </div>
+      <div class="ranking-table-wrap">
+        <table class="ranking-table">
+          <thead><tr><th scope="col">순위</th><th scope="col">닉네임</th><th scope="col">기록</th><th scope="col">결과</th><th scope="col">날짜</th></tr></thead>
+          <tbody id="rankingBody"><tr><td colspan="5" class="ranking-empty">아직 등록된 기록이 없습니다.</td></tr></tbody>
+        </table>
+      </div>
+      <p class="ranking-footnote">기록은 현재 기기의 브라우저에만 저장됩니다. 다른 이용자와 실시간으로 공유하려면 온라인 데이터베이스가 필요합니다.</p>
+    </section>
   </main>
 </body>
 </html>
