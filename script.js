@@ -4,6 +4,8 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const scoreEl = document.getElementById("score");
 const bestEl = document.getElementById("best");
+const stageLabelEl = document.getElementById("stageLabel");
+const stageHintEl = document.getElementById("stageHint");
 const overlay = document.getElementById("overlay");
 const overlayTag = document.getElementById("overlayTag");
 const overlayTitle = document.getElementById("overlayTitle");
@@ -29,7 +31,31 @@ const GROUND_Y = 338;
 const TARGET = 10;
 const GRAVITY = 1800;
 const JUMP_VELOCITY = -680;
-const SPEED = 320;
+// 1단계: 시작 / 2단계: 3개 통과 / 3단계: 6개 통과.
+// 속도는 매 프레임 현재 단계 값을 사용하므로 단계가 바뀌자마자 적용됩니다.
+const STAGES = [
+  { level: 1, minScore: 0, speed: 300, spawnMin: 1.80, spawnMax: 2.15, label: "기본 속도" },
+  { level: 2, minScore: 3, speed: 350, spawnMin: 1.60, spawnMax: 1.90, label: "빠른 속도" },
+  { level: 3, minScore: 6, speed: 400, spawnMin: 1.45, spawnMax: 1.70, label: "최고 난이도" },
+];
+function stageForScore(value) {
+  return value >= 6 ? STAGES[2] : value >= 3 ? STAGES[1] : STAGES[0];
+}
+let currentStage = STAGES[0];
+let stageNoticeUntil = 0;
+function setStage(next, announce = false) {
+  if (currentStage === next && announce) return;
+  currentStage = next;
+  stageLabelEl.textContent = `${next.level}단계`;
+  stageHintEl.textContent = next.label;
+  if (announce) {
+    stageNoticeUntil = performance.now() + 1550;
+    // 새 단계가 시작된 직후 장애물이 겹쳐 등장하지 않도록 타이머 갱신.
+    spawnTimer = Math.max(spawnTimer, next.spawnMin * 0.8);
+  } else {
+    stageNoticeUntil = 0;
+  }
+}
 const PLAYER = { x: 138, width: 43, height: 54 };
 
 let state = "ready";
@@ -154,7 +180,8 @@ function startGame() {
   playerY = GROUND_Y - PLAYER.height;
   verticalSpeed = 0;
   obstacles = [];
-  spawnTimer = 1.45;
+  spawnTimer = 1.55;
+  setStage(STAGES[0]);
   groundOffset = 0;
   state = "playing";
   jumpButton.disabled = false;
@@ -208,16 +235,16 @@ function update(dt) {
   const floor = GROUND_Y - PLAYER.height;
   if (playerY > floor) { playerY = floor; verticalSpeed = 0; }
 
-  groundOffset = (groundOffset + SPEED * dt) % 55;
+  groundOffset = (groundOffset + currentStage.speed * dt) % 55;
   spawnTimer -= dt;
   if (spawnTimer <= 0) {
     spawnObstacle();
     // Obstacles arrive at regular, learnable intervals with a little variety.
-    spawnTimer = 1.55 + Math.random() * 0.45;
+    spawnTimer = currentStage.spawnMin + Math.random() * (currentStage.spawnMax - currentStage.spawnMin);
   }
 
   for (const obs of obstacles) {
-    obs.x -= SPEED * dt;
+    obs.x -= currentStage.speed * dt;
     // Slightly inset hitboxes avoid unfair collisions at visual edges.
     const hit = PLAYER.x + 7 < obs.x + obs.width - 5 &&
       PLAYER.x + PLAYER.width - 7 > obs.x + 5 &&
@@ -229,6 +256,8 @@ function update(dt) {
       score += 1;
       scoreEl.textContent = String(score);
       if (score >= TARGET) { finish(true); return; }
+      const nextStage = stageForScore(score);
+      if (nextStage !== currentStage) setStage(nextStage, true);
     }
   }
   obstacles = obstacles.filter(obs => obs.x + obs.width > -20);
@@ -293,6 +322,26 @@ function draw() {
   ctx.fillText(state === "playing" ? "장애물이 다가오면 점프!" : "SPACE = JUMP", 30, 36);
   roundRect(W - 235, 24, 205, 13, 7, "#11223f");
   if (score > 0) roundRect(W - 235, 24, 205 * score / TARGET, 13, 7, "#71f4d2");
+
+  // HUD와 단계 진입 안내. 엔딩 오버레이와 겹치지 않도록 플레이 중만 표시.
+  if (state === "playing") {
+    ctx.font = "800 19px system-ui";
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#e2fff6";
+    ctx.fillText(`${currentStage.level} / 3 단계`, W - 32, 66);
+    ctx.textAlign = "left";
+    if (performance.now() < stageNoticeUntil) {
+      roundRect(W / 2 - 190, 118, 380, 94, 18, "#0e203add");
+      ctx.textAlign = "center";
+      ctx.font = "800 30px system-ui";
+      ctx.fillStyle = "#71f4d2";
+      ctx.fillText(`${currentStage.level}단계 시작!`, W / 2, 158);
+      ctx.font = "600 16px system-ui";
+      ctx.fillStyle = "#e8f6ff";
+      ctx.fillText("장애물 속도가 더 빨라집니다", W / 2, 187);
+      ctx.textAlign = "left";
+    }
+  }
 }
 
 function frame(timestamp) {

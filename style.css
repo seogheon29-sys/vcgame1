@@ -99,3 +99,13 @@ kbd { padding: 9px 15px; border-radius: 8px; border: 1px solid #59708e; backgrou
   .save-button { width: 100%; }
   .overlay-card { max-height: 100%; overflow-y: auto; }
 }
+
+/* Three-stage difficulty indicator */
+.scoreboard .stage-score { min-width: 136px; border-color: #5b8c93; }
+.stage-score strong { display: block; font-size: 22px; color: var(--mint); white-space: nowrap; }
+.stage-score small { display: block; font-size: 11px; }
+@media (max-width: 650px) {
+  .scoreboard { flex-wrap: wrap; }
+  .scoreboard > div { min-width: 0; }
+  .scoreboard .stage-score { flex-basis: 100%; }
+}
