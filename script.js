@@ -70,6 +70,50 @@ function playJumpSound() {
   }
 }
 
+// Play a short note using the same audio system as the jump sound.
+// delay and duration are in seconds, so no timers or external audio files are needed.
+function playEndNote(frequency, delay, duration, type = "sine", volume = 0.14) {
+  if (!audioContext || audioContext.state !== "running") return;
+  const start = audioContext.currentTime + delay;
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, start);
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(volume, start + 0.018);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.02);
+  oscillator.onended = () => {
+    oscillator.disconnect();
+    gain.disconnect();
+  };
+}
+
+function playEndingSound(won) {
+  if (!soundEnabled) return;
+  try {
+    // The audio context has already been unlocked by the user's jump gesture.
+    if (!audioContext || audioContext.state !== "running") return;
+    if (won) {
+      // Bright, ascending victory fanfare.
+      playEndNote(523.25, 0.00, 0.18);
+      playEndNote(659.25, 0.16, 0.18);
+      playEndNote(783.99, 0.32, 0.18);
+      playEndNote(1046.50, 0.49, 0.46, "triangle", 0.17);
+    } else {
+      // Lower, descending loss melody.
+      playEndNote(392.00, 0.00, 0.23, "triangle", 0.13);
+      playEndNote(311.13, 0.21, 0.24, "triangle", 0.13);
+      playEndNote(196.00, 0.43, 0.48, "triangle", 0.14);
+    }
+  } catch (error) {
+    console.warn("엔딩 효과음을 재생할 수 없습니다.", error);
+  }
+}
+
 function updateSoundButton() {
   soundButton.textContent = soundEnabled ? "🔊 소리 켜짐" : "🔇 소리 꺼짐";
   soundButton.setAttribute("aria-pressed", String(soundEnabled));
@@ -110,8 +154,10 @@ function jump() {
 }
 
 function finish(won) {
+  if (state !== "playing") return; // Prevent repeated ending sounds.
   state = won ? "won" : "lost";
   jumpButton.disabled = true;
+  playEndingSound(won);
   if (score > best) {
     best = score;
     bestEl.textContent = String(best);
