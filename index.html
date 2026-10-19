@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>점프 타이밍 | 장애물을 뛰어넘자!</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <main class="game-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">ONE BUTTON ARCADE</p>
+        <h1>점프 타이밍 <span aria-hidden="true">✦</span></h1>
+        <p class="subtitle">타이밍을 맞춰 장애물 10개를 넘어 보세요!</p>
+      </div>
+      <div class="scoreboard" aria-live="polite">
+        <div><span>통과</span><strong id="score">0</strong><small>/ 10</small></div>
+        <div><span>최고 기록</span><strong id="best">0</strong></div>
+      </div>
+    </header>
+
+    <section class="game-area" aria-label="점프 타이밍 게임 화면">
+      <canvas id="gameCanvas" width="960" height="420" aria-label="캐릭터가 달려오는 장애물을 점프로 피하는 게임"></canvas>
+      <div id="overlay" class="overlay">
+        <div class="overlay-card">
+          <p id="overlayTag" class="overlay-tag">READY TO JUMP?</p>
+          <h2 id="overlayTitle">점프할 준비 됐나요?</h2>
+          <p id="overlayText">스페이스바 또는 화면 아래 버튼으로 점프!<br />장애물 10개를 통과하면 승리합니다.</p>
+          <button id="startButton" class="primary-button" type="button">게임 시작 <span aria-hidden="true">→</span></button>
+        </div>
+      </div>
+    </section>
+
+    <div class="footerbar">
+      <div class="control-hint"><kbd>SPACE</kbd><span>점프 · 착지 후 다시 점프 가능</span></div>
+      <button id="jumpButton" type="button" class="jump-button" disabled>⬆ 점프!</button>
+      <button id="restartButton" type="button" class="secondary-button">↻ 처음부터</button>
+    </div>
+    <p class="help-text">PC에서는 스페이스바, 모바일에서는 점프 버튼을 사용하세요. 게임 진행 중 스페이스바를 누르면 페이지가 스크롤되지 않습니다.</p>
+  </main>
+</body>
+</html>
