@@ -50,6 +50,7 @@ kbd { padding: 9px 15px; border-radius: 8px; border: 1px solid #59708e; backgrou
 .jump-button:disabled { opacity: .5; cursor: not-allowed; }
 .secondary-button { padding: 13px 17px; border: 1px solid #526786; border-radius: 12px; background: #22334f; color: white; }
 .secondary-button:hover { background: #304666; }
+.sound-button { white-space: nowrap; }
 .help-text { margin: 16px 0 0; color: #8395b1; font-size: 12px; text-align: center; }
 @media (max-width: 650px) {
   .topbar { align-items: flex-start; flex-direction: column; gap: 15px; }

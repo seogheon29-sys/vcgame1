@@ -11,6 +11,7 @@ const overlayText = document.getElementById("overlayText");
 const startButton = document.getElementById("startButton");
 const jumpButton = document.getElementById("jumpButton");
 const restartButton = document.getElementById("restartButton");
+const soundButton = document.getElementById("soundButton");
 
 const W = canvas.width;
 const H = canvas.height;
@@ -30,6 +31,49 @@ let spawnTimer = 1.5;
 let groundOffset = 0;
 let lastTime = 0;
 let best = 0;
+// AudioContext is created only after a user gesture to meet browser autoplay policies.
+let audioContext = null;
+let soundEnabled = true;
+
+function playJumpSound() {
+  if (!soundEnabled) return;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return; // Game remains playable without Web Audio support.
+
+  try {
+    if (!audioContext) audioContext = new AudioContextClass();
+    if (audioContext.state === "suspended") {
+      // Called from a click or keypress handler, so resume is permitted.
+      audioContext.resume().catch(() => {});
+    }
+
+    const now = audioContext.currentTime;
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(360, now);
+    oscillator.frequency.exponentialRampToValueAtTime(720, now + 0.11);
+    oscillator.frequency.exponentialRampToValueAtTime(520, now + 0.2);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.16, now + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.23);
+    oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+  } catch (error) {
+    // Audio is optional; an unavailable audio device must not stop gameplay.
+    console.warn("점프 효과음을 재생할 수 없습니다.", error);
+  }
+}
+
+function updateSoundButton() {
+  soundButton.textContent = soundEnabled ? "🔊 소리 켜짐" : "🔇 소리 꺼짐";
+  soundButton.setAttribute("aria-pressed", String(soundEnabled));
+}
 
 try { best = Number(localStorage.getItem("jumpTimingBest") || 0) || 0; }
 catch { /* Local storage may be blocked: game still works. */ }
@@ -61,6 +105,7 @@ function jump() {
   if (state !== "playing") return;
   if (playerY >= GROUND_Y - PLAYER.height - 0.5) {
     verticalSpeed = JUMP_VELOCITY;
+    playJumpSound();
   }
 }
 
@@ -190,6 +235,11 @@ function frame(timestamp) {
 
 startButton.addEventListener("click", startGame);
 restartButton.addEventListener("click", startGame);
+soundButton.addEventListener("click", () => {
+  soundEnabled = !soundEnabled;
+  updateSoundButton();
+});
+updateSoundButton();
 jumpButton.addEventListener("click", jump);
 window.addEventListener("keydown", event => {
   if (event.code !== "Space") return;
