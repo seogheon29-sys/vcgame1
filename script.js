@@ -431,7 +431,6 @@ recordForm.addEventListener("submit", event => {
 });
 
 startButton.addEventListener("click", startGame);
-restartButton.addEventListener("click", startGame);
 soundButton.addEventListener("click", () => {
   soundEnabled = !soundEnabled;
   updateSoundButton();
