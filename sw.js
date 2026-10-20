@@ -3,7 +3,7 @@
 // Increase the version when publishing changed images, audio, or app shell files.
 // Scope-specific names keep other GitHub Pages projects' caches untouched.
 const CACHE_PREFIX = `meteor-dodge:${self.registration.scope}:`;
-const CACHE_NAME = `${CACHE_PREFIX}v1`;
+const CACHE_NAME = `${CACHE_PREFIX}v2`;
 const CORE_FILES = [
   "./", "./index.html", "./manifest.json",
   "./icons/icon-192.png", "./icons/icon-512.png",

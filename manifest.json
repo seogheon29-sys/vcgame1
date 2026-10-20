@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "운석 피하기",
-  "short_name": "운석피하기",
+  "name": "점프 타이밍",
+  "short_name": "점프 타이밍",
   "description": "점프로 장애물을 피하는 원버튼 아케이드 게임",
   "lang": "ko",
   "start_url": "./",
